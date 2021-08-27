@@ -9,16 +9,20 @@ import pacdb
 from urllib.request import urlretrieve
 
 class ProblematicImportSearcher(object):
-    def __init__(self, problem_dll, problem_symbols, temp_dir=None):
+    def __init__(self, problem_dll, problem_symbols, temp_dir=None, local_mirror=None):
         super(ProblematicImportSearcher, self).__init__()
         self.problem_dll = problem_dll.encode('ascii').lower()
         self.problem_symbols = set(sym.encode('ascii') for sym in problem_symbols)
         self.temp_dir = temp_dir
+        self.local_mirror = local_mirror
 
     def __call__(self, pkg):
         with tempfile.TemporaryDirectory(dir=self.temp_dir) as tmpdir:
-            localfile = os.path.join(tmpdir, pkg.filename)
-            urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(pkg.db.name, pkg.filename), localfile)
+            if self.local_mirror:
+                localfile = os.path.join(self.local_mirror, 'mingw', pkg.db.name, pkg.filename)
+            else:
+                localfile = os.path.join(tmpdir, pkg.filename)
+                urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(pkg.db.name, pkg.filename), localfile)
             subprocess.call(['bsdtar', '-C', tmpdir, '-xf', localfile], stderr=subprocess.DEVNULL)
             for root, dirs, files in os.walk(tmpdir):
                 for name in files:
@@ -43,14 +47,18 @@ parser = argparse.ArgumentParser(description='Search packages for problematic im
 parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to search')
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
 parser.add_argument('-d', '--dll', required=True, help='dll from which problematic symbols are imported')
+parser.add_argument('-l', '--local-mirror', help='root directory of local mirror')
 parser.add_argument('-t', '--tempdir', help='directory for temporary files')
 parser.add_argument('symbol', nargs='*', help='problematic symbol(s)')
 
 options = parser.parse_args()
 
-package_handler = ProblematicImportSearcher(options.dll, options.symbol, options.tempdir)
+package_handler = ProblematicImportSearcher(options.dll, options.symbol, options.tempdir, options.local_mirror)
 
-repo = pacdb.mingw_db_by_name(options.repo)
+if options.local_mirror:
+    repo = pacdb.Database(options.repo, filename=os.path.join(options.local_mirror, 'mingw', options.repo, '{}.db'.format(options.repo)))
+else:
+    repo = pacdb.mingw_db_by_name(options.repo)
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
