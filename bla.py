@@ -12,7 +12,7 @@ PROBLEM_DLL=b"libharfbuzz-0.dll"
 PROBLEM_SYMBOLS=set((b'_ZdaPv', b'_ZdlPv', b'_Znay', b'_Znwy', b'_Znaj', b'_Znwj'))
 
 def process_package(pkgfile):
-    with tempfile.TemporaryDirectory(dir=".") as tmpdir:
+    with tempfile.TemporaryDirectory(dir="/c/_") as tmpdir:
         localfile = os.path.join(tmpdir, pkgfile)
         urlretrieve("https://mirror.msys2.org/mingw/mingw64/{}".format(pkgfile), localfile)
         subprocess.check_call(['bsdtar', '-C', tmpdir, '-xf', localfile])
