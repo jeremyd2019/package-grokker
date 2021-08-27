@@ -21,6 +21,7 @@ jobs:
         with:
           release: true
           update: true
+          msystem: MSYS
           install: python python-pyalpm
       - name: Grok packages
         shell: msys2 {0}
