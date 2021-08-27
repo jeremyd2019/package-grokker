@@ -15,7 +15,7 @@ def process_package(pkgfile):
     with tempfile.TemporaryDirectory(dir="/c/_") as tmpdir:
         localfile = os.path.join(tmpdir, pkgfile)
         urlretrieve("https://mirror.msys2.org/mingw/mingw64/{}".format(pkgfile), localfile)
-        subprocess.check_call(['tar', '-C', tmpdir, '-xf', localfile])
+        subprocess.call(['bsdtar', '-C', tmpdir, '-xf', localfile], stderr=subprocess.DEVNULL)
         for root, dirs, files in os.walk(tmpdir):
             for name in files:
                 p = os.path.normpath(os.path.join(root, name))
