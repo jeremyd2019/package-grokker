@@ -3,18 +3,20 @@ import subprocess
 import sys
 import os
 import concurrent.futures
-import io
-import fileinput
 import tempfile
+import pycman.config
+import pyalpm
 from urllib.request import urlretrieve
 
+CHECK_REPO="mingw64"
+PROBLEM_PACKAGE="mingw-w64-x86_64-harfbuzz"
 PROBLEM_DLL=b"libharfbuzz-0.dll"
 PROBLEM_SYMBOLS=set((b'_ZdaPv', b'_ZdlPv', b'_Znay', b'_Znwy', b'_Znaj', b'_Znwj'))
 
-def process_package(pkgfile):
+def process_package(pkg):
     with tempfile.TemporaryDirectory(dir="/c/_") as tmpdir:
-        localfile = os.path.join(tmpdir, pkgfile)
-        urlretrieve("https://mirror.msys2.org/mingw/mingw64/{}".format(pkgfile), localfile)
+        localfile = os.path.join(tmpdir, pkg.filename)
+        urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(CHECK_REPO, pkg.filename), localfile)
         subprocess.call(['bsdtar', '-C', tmpdir, '-xf', localfile], stderr=subprocess.DEVNULL)
         for root, dirs, files in os.walk(tmpdir):
             for name in files:
@@ -30,18 +32,27 @@ def process_package(pkgfile):
                     if entry.dll.lower() == PROBLEM_DLL:
                         for imp in entry.imports:
                             if imp.name in PROBLEM_SYMBOLS:
-                                return pkgfile
+                                return pkg
     return None
-
 
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
     futures = []
-    for pkgfile in fileinput.input():
-        pkgfile = pkgfile.rstrip()
-        futures.append(executor.submit(process_package, pkgfile))
+    alpm_handle = pycman.config.init_with_config('/etc/pacman.conf')
+    repo = [db for db in alpm_handle.get_syncdbs() if db.name == CHECK_REPO][0]
 
-    for future in concurrent.futures.as_completed(futures):
+    done={}
+    todo=[PROBLEM_PACKAGE]
+
+    while todo:
+        more=[]
+        for pkgname in todo:
+            pkg = repo.get_pkg(pkgname)
+            more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
+            done[pkgname] = executor.submit(process_package, pkg)
+        todo = more
+
+    for future in concurrent.futures.as_completed(done.values()):
         result = future.result()
         if result is not None:
-            print(result)
+            print(result.base)

@@ -21,7 +21,8 @@ jobs:
         with:
           release: true
           update: true
-          install: python pacman-contrib pacutils
+          msystem: MSYS
+          install: python python-pyalpm
       - name: Grok packages
         shell: msys2 {0}
         run: |
@@ -29,4 +30,4 @@ jobs:
           . pefile/bin/activate
           pip install pefile
           mkdir /c/_
-          pactree -rus mingw-w64-x86_64-harfbuzz | xargs pacinfo | sed -ne 's/^File:\s*\(.*$\)/\1/p' | python -u bla.py
+          python -u bla.py
