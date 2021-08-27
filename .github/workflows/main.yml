@@ -44,4 +44,4 @@ jobs:
           . pefile/bin/activate
           pip install pefile
           mkdir /c/_
-          python -u bla.py -t /c/_ -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}
+          python -u package-grokker.py -t /c/_ -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}
