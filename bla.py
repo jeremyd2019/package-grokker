@@ -33,6 +33,8 @@ class ProblematicImportSearcher(object):
                         continue
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
                         if entry.dll.lower() == self.problem_dll:
+                            if not self.problem_symbols:
+                                return pkg
                             for imp in entry.imports:
                                 if imp.name in self.problem_symbols:
                                     return pkg
@@ -43,7 +45,7 @@ parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
 parser.add_argument('-d', '--dll', required=True, help='dll from which problematic symbols are imported')
 parser.add_argument('-t', '--tempdir', help='directory for temporary files')
-parser.add_argument('symbol', nargs='+', help='problematic symbol(s)')
+parser.add_argument('symbol', nargs='*', help='problematic symbol(s)')
 
 options = parser.parse_args()
 

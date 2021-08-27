@@ -21,7 +21,7 @@ on:
         default: 'libharfbuzz-0.dll'
       symbols:
         description: 'problematic symbol(s)'
-        required: true
+        required: false
         default: '_ZdaPv _ZdlPv _Znay _Znwy _Znaj _Znwj'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
