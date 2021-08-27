@@ -13,10 +13,10 @@ PROBLEM_PACKAGE="mingw-w64-x86_64-harfbuzz"
 PROBLEM_DLL=b"libharfbuzz-0.dll"
 PROBLEM_SYMBOLS=set((b'_ZdaPv', b'_ZdlPv', b'_Znay', b'_Znwy', b'_Znaj', b'_Znwj'))
 
-def process_package(pkgfile):
+def process_package(pkg):
     with tempfile.TemporaryDirectory(dir="/c/_") as tmpdir:
-        localfile = os.path.join(tmpdir, pkgfile)
-        urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(CHECK_REPO, pkgfile), localfile)
+        localfile = os.path.join(tmpdir, pkg.filename)
+        urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(CHECK_REPO, pkg.filename), localfile)
         subprocess.call(['bsdtar', '-C', tmpdir, '-xf', localfile], stderr=subprocess.DEVNULL)
         for root, dirs, files in os.walk(tmpdir):
             for name in files:
@@ -32,7 +32,7 @@ def process_package(pkgfile):
                     if entry.dll.lower() == PROBLEM_DLL:
                         for imp in entry.imports:
                             if imp.name in PROBLEM_SYMBOLS:
-                                return pkgfile
+                                return pkg
     return None
 
 
@@ -49,10 +49,10 @@ with concurrent.futures.ThreadPoolExecutor(20) as executor:
         for pkgname in todo:
             pkg = repo.get_pkg(pkgname)
             more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
-            done[pkgname] = executor.submit(process_package, pkg.filename)
+            done[pkgname] = executor.submit(process_package, pkg)
         todo = more
 
     for future in concurrent.futures.as_completed(done.values()):
         result = future.result()
         if result is not None:
-            print(result)
+            print(result.base)
