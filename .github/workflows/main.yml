@@ -28,4 +28,4 @@ jobs:
           python -m venv --system-site-packages pefile
           . pefile/bin/activate
           pip install pefile
-          pactree -rus mingw-w64-x86_64-harfbuzz | xargs pacinfo | sed -ne 's/^File:\s*\(.*$\)/\1/p' | python bla.py
+          pactree -rus mingw-w64-x86_64-harfbuzz | xargs pacinfo | sed -ne 's/^File:\s*\(.*$\)/\1/p' | python -u bla.py
