@@ -26,22 +26,20 @@ jobs:
   # This workflow contains a single job called "build"
   checker:
     # The type of runner that the job will run on
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
-      - uses: msys2/setup-msys2@v2
-        with:
-          release: true
-          update: true
-          msystem: MSYS
-          install: python python-pyalpm
-      - name: Grok packages
-        shell: msys2 {0}
+      - name: Install stuff
         run: |
+          sudo apt-get -y install libarchive-tools
           python -m venv --system-site-packages pefile
           . pefile/bin/activate
           pip install pefile
-          mkdir /c/_
-          python -u package-grokker.py -t /c/_ -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}
+          deactivate
+          df -h
+      - name: Grok packages
+        run: |
+          . pefile/bin/activate
+          python -u package-grokker.py -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}

@@ -5,8 +5,7 @@ import sys
 import os
 import concurrent.futures
 import tempfile
-import pycman.config
-import pyalpm
+import pacdb
 from urllib.request import urlretrieve
 
 class ProblematicImportSearcher(object):
@@ -40,7 +39,7 @@ class ProblematicImportSearcher(object):
                                     return pkg
         return None
 
-parser = pycman.config.make_parser(description='Search packages for problematic imports')
+parser = argparse.ArgumentParser(description='Search packages for problematic imports')
 parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to search')
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
 parser.add_argument('-d', '--dll', required=True, help='dll from which problematic symbols are imported')
@@ -51,8 +50,7 @@ options = parser.parse_args()
 
 package_handler = ProblematicImportSearcher(options.dll, options.symbol, options.tempdir)
 
-alpm_handle = pycman.config.init_with_config_and_options(options)
-repo = [db for db in alpm_handle.get_syncdbs() if db.name == options.repo][0]
+repo = pacdb.mingw_db_by_name(options.repo)
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
