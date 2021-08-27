@@ -3,11 +3,13 @@ import subprocess
 import sys
 import os
 import concurrent.futures
-import io
-import fileinput
 import tempfile
+import pycman.config
+import pyalpm
 from urllib.request import urlretrieve
 
+CHECK_REPO="mingw64"
+PROBLEM_PACKAGE="mingw-w64-x86_64-harfbuzz"
 PROBLEM_DLL=b"libharfbuzz-0.dll"
 PROBLEM_SYMBOLS=set((b'_ZdaPv', b'_ZdlPv', b'_Znay', b'_Znwy', b'_Znaj', b'_Znwj'))
 
@@ -34,14 +36,23 @@ def process_package(pkgfile):
     return None
 
 
-
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
     futures = []
-    for pkgfile in fileinput.input():
-        pkgfile = pkgfile.rstrip()
-        futures.append(executor.submit(process_package, pkgfile))
+    alpm_handle = pycman.config.init_with_config('/etc/pacman.conf')
+    repo = [db for db in alpm_handle.get_syncdbs() if db.name == CHECK_REPO][0]
 
-    for future in concurrent.futures.as_completed(futures):
+    done={}
+    todo=[PROBLEM_PACKAGE]
+
+    while todo:
+        more=[]
+        for pkgname in todo:
+            pkg = mingw64.get_pkg(pkgname)
+            more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
+            done[pkgname] = executor.submit(process_package, pkg.filename)
+        todo = more
+
+    for future in concurrent.futures.as_completed(done.values()):
         result = future.result()
         if result is not None:
             print(result)
