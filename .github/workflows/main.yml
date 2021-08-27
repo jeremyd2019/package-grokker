@@ -6,6 +6,23 @@ name: CI
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      repo:
+        description: 'pacman repo name to search'
+        required: true
+        default: 'mingw64'
+      package:
+        description: 'package from which to find dependents'
+        required: true
+        default: 'mingw-w64-x86_64-harfbuzz'
+      dll:
+        description: 'dll from which problematic symbols are imported'
+        required: true
+        default: 'libharfbuzz-0.dll'
+      symbols:
+        description: 'problematic symbol(s)'
+        required: true
+        default: '_ZdaPv _ZdlPv _Znay _Znwy _Znaj _Znwj'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -30,4 +47,4 @@ jobs:
           . pefile/bin/activate
           pip install pefile
           mkdir /c/_
-          python -u bla.py
+          python -u bla.py -t /c/_ -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}
