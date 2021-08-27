@@ -16,7 +16,7 @@ PROBLEM_SYMBOLS=set((b'_ZdaPv', b'_ZdlPv', b'_Znay', b'_Znwy', b'_Znaj', b'_Znwj
 def process_package(pkgfile):
     with tempfile.TemporaryDirectory(dir="/c/_") as tmpdir:
         localfile = os.path.join(tmpdir, pkgfile)
-        urlretrieve("https://mirror.msys2.org/mingw/mingw64/{}".format(pkgfile), localfile)
+        urlretrieve("https://mirror.msys2.org/mingw/{}/{}".format(CHECK_REPO, pkgfile), localfile)
         subprocess.call(['bsdtar', '-C', tmpdir, '-xf', localfile], stderr=subprocess.DEVNULL)
         for root, dirs, files in os.walk(tmpdir):
             for name in files:
