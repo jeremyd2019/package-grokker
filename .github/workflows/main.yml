@@ -14,15 +14,12 @@ on:
       package:
         description: 'package from which to find dependents'
         required: true
-        default: 'mingw-w64-x86_64-harfbuzz'
       dll:
         description: 'dll from which problematic symbols are imported'
         required: true
-        default: 'libharfbuzz-0.dll'
       symbols:
         description: 'problematic symbol(s)'
         required: false
-        default: '_ZdaPv _ZdlPv _Znay _Znwy _Znaj _Znwj'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
