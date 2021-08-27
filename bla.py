@@ -47,7 +47,7 @@ with concurrent.futures.ThreadPoolExecutor(20) as executor:
     while todo:
         more=[]
         for pkgname in todo:
-            pkg = mingw64.get_pkg(pkgname)
+            pkg = repo.get_pkg(pkgname)
             more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
             done[pkgname] = executor.submit(process_package, pkg.filename)
         todo = more
