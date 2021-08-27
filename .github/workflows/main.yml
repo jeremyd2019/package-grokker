@@ -1,0 +1,31 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  checker:
+    # The type of runner that the job will run on
+    runs-on: windows-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+      - uses: msys2/setup-msys2@v2
+        with:
+          release: true
+          update: true
+          install: python pacman-contrib pacutils
+      - name: Grok packages
+        shell: msys2 {0}
+        run: |
+          python -m venv --system-site-packages pefile
+          . pefile/bin/activate
+          pip install pefile
+          pactree -rus mingw-w64-x86_64-harfbuzz | xargs pacinfo | sed -ne 's/^File:\s*\(.*$\)/\1/p' | python bla.py
