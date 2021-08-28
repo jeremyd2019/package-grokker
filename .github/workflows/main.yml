@@ -15,7 +15,7 @@ on:
         description: 'package from which to find dependents'
         required: true
       dll:
-        description: 'dll from which problematic symbols are imported'
+        description: 'dll(s) from which problematic symbols are imported'
         required: true
       symbols:
         description: 'problematic symbol(s)'
@@ -42,4 +42,8 @@ jobs:
       - name: Grok packages
         run: |
           . pefile/bin/activate
-          python -u package-grokker.py -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' -d '${{ github.event.inputs.dll }}' ${{ github.event.inputs.symbols }}
+          dlls=""
+          for d in ${{ github.event.inputs.dll }}; do
+            dlls+=" -d $d"
+          done
+          python -u package-grokker.py -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' $dlls ${{ github.event.inputs.symbols }}
