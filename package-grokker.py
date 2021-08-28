@@ -9,9 +9,9 @@ import pacdb
 from urllib.request import urlretrieve
 
 class ProblematicImportSearcher(object):
-    def __init__(self, problem_dll, problem_symbols, temp_dir=None, local_mirror=None):
+    def __init__(self, problem_dlls, problem_symbols, temp_dir=None, local_mirror=None):
         super(ProblematicImportSearcher, self).__init__()
-        self.problem_dll = problem_dll.encode('ascii').lower()
+        self.problem_dlls = set(dll.encode('ascii').lower() for dll in problem_dlls)
         self.problem_symbols = set(sym.encode('ascii') for sym in problem_symbols)
         self.temp_dir = temp_dir
         self.local_mirror = local_mirror
@@ -35,7 +35,7 @@ class ProblematicImportSearcher(object):
                     except pefile.PEFormatError:
                         continue
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        if entry.dll.lower() == self.problem_dll:
+                        if entry.dll.lower() in self.problem_dlls:
                             if not self.problem_symbols:
                                 return pkg
                             for imp in entry.imports:
@@ -46,7 +46,7 @@ class ProblematicImportSearcher(object):
 parser = argparse.ArgumentParser(description='Search packages for problematic imports')
 parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to search')
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
-parser.add_argument('-d', '--dll', required=True, help='dll from which problematic symbols are imported')
+parser.add_argument('-d', '--dll', required=True, action='append', help='dll(s) from which problematic symbols are imported')
 parser.add_argument('-l', '--local-mirror', help='root directory of local mirror')
 parser.add_argument('-t', '--tempdir', help='directory for temporary files')
 parser.add_argument('symbol', nargs='*', help='problematic symbol(s)')
