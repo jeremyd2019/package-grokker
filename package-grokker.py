@@ -44,6 +44,7 @@ class ProblematicImportSearcher(object):
                                     return pkg
         return None
 
+
 parser = argparse.ArgumentParser(description='Search packages for problematic imports')
 parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to search')
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
@@ -65,6 +66,11 @@ with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
     done={}
     todo=[options.package]
+
+    # Check packages that immediately makedepend on the given package
+    # https://github.com/jeremyd2019/package-grokker/issues/6
+    for pkgname in repo.get_pkg(options.package).compute_rdepends('makedepends'):
+        done[pkgname] = executor.submit(package_handler, repo.get_pkg(pkgname))
 
     while todo:
         more=[]
