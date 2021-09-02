@@ -5,8 +5,9 @@ import sys
 import os
 import concurrent.futures
 import tempfile
-import pacdb
 from urllib.request import urlretrieve
+
+from pacdb import pacdb
 
 class ProblematicImportSearcher(object):
     def __init__(self, problem_dlls, problem_symbols, temp_dir=None, local_mirror=None):

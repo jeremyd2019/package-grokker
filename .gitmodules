@@ -1,0 +1,3 @@
+[submodule "pacdb"]
+	path = pacdb
+	url = https://github.com/jeremyd2019/pacdb.git
