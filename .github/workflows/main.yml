@@ -35,12 +35,10 @@ jobs:
           submodules: true
       - name: Install stuff
         run: |
-          sudo apt-get -y install libarchive-tools
           python -m venv --system-site-packages pefile
           . pefile/bin/activate
-          pip install pefile
+          pip install pefile zstandard
           deactivate
-          df -h
       - name: Grok packages
         run: |
           . pefile/bin/activate
