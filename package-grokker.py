@@ -13,6 +13,8 @@ from pacdb import pacdb
 
 _tls = threading.local()
 
+PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd"))
+
 @contextmanager
 def open_zstd_supporting_tar(name, fileobj):
     # HACK: please, Python, support zst with :* in tarfile
@@ -44,10 +46,12 @@ class ProblematicImportSearcher(object):
             return urlopen("https://mirror.msys2.org/mingw/{}/{}".format(pkg.db.name, pkg.filename))
 
     def __call__(self, pkg):
+        if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
+            return None
         with self._open_package(pkg) as pkgfile:
             with open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
                 for entry in tar:
-                    if not entry.isfile() or os.path.splitext(entry.name)[-1] not in (".dll", ".exe", ".pyd"):
+                    if not entry.isfile() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
                         continue
 
                     with tar.extractfile(entry) as infofile:
@@ -80,9 +84,9 @@ options = parser.parse_args()
 package_handler = ProblematicImportSearcher(options.dll, options.symbol, options.local_mirror)
 
 if options.local_mirror:
-    repo = pacdb.Database(options.repo, filename=os.path.join(options.local_mirror, 'mingw', options.repo, '{}.db'.format(options.repo)))
+    repo = pacdb.Database(options.repo, filename=os.path.join(options.local_mirror, 'mingw', options.repo, '{}.files'.format(options.repo)))
 else:
-    repo = pacdb.mingw_db_by_name(options.repo)
+    repo = pacdb.mingw_db_by_name(options.repo, 'files')
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
