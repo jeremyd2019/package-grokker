@@ -6,7 +6,7 @@ import tarfile
 import threading
 import zstandard
 
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 from urllib.request import urlopen
 
 from pacdb import pacdb
@@ -15,17 +15,18 @@ _tls = threading.local()
 
 PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd"))
 
+
 @contextmanager
 def open_zstd_supporting_tar(name, fileobj):
-    # HACK: please, Python, support zst with :* in tarfile
+    # HACK: please, Python, support zst with |* in tarfile
     # could probably check for magic, but would have to have a stream wrapper
     # like tarfile already has to "put back" the magic bytes
     if name.endswith(".zst"):
-        if not hasattr(_tls, 'zctx'):
-            _tls.zctx = zstandard.ZstdDecompressor()
-        with _tls.zctx.stream_reader(fileobj, closefd=False) as zstream:
-            with tarfile.open(fileobj=zstream, mode="r|") as tar:
-                yield tar
+        if not hasattr(_tls, 'zdctx'):
+            _tls.zdctx = zstandard.ZstdDecompressor()
+        with _tls.zdctx.stream_reader(fileobj, closefd=False) as zstream, \
+             tarfile.open(fileobj=zstream, mode="r|") as tar:
+            yield tar
     else:
         with tarfile.open(fileobj=fileobj, mode="r|*") as tar:
             yield tar
@@ -48,27 +49,27 @@ class ProblematicImportSearcher(object):
     def __call__(self, pkg):
         if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
             return None
-        with self._open_package(pkg) as pkgfile:
-            with open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
-                for entry in tar:
-                    if not entry.isfile() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
-                        continue
+        with self._open_package(pkg) as pkgfile, \
+             open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
+            for entry in tar:
+                if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
+                    continue
 
-                    with tar.extractfile(entry) as infofile:
-                        data = infofile.read()
-
-                    try:
-                        pe = pefile.PE(data=data, fast_load=True)
-                        pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']])
-                    except pefile.PEFormatError:
-                        continue
-                    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        if entry.dll.lower() in self.problem_dlls:
-                            if not self.problem_symbols:
-                                return pkg
-                            for imp in entry.imports:
-                                if imp.name in self.problem_symbols:
+                try:
+                    with tar.extractfile(entry) as infofile, \
+                         closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
+                        pe.parse_data_directories(directories=[
+                            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
+                        ])
+                        for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                            if entry.dll.lower() in self.problem_dlls:
+                                if not self.problem_symbols:
                                     return pkg
+                                for imp in entry.imports:
+                                    if imp.name in self.problem_symbols:
+                                        return pkg
+                except pefile.PEFormatError:
+                    continue
         return None
 
 
@@ -105,6 +106,8 @@ with concurrent.futures.ThreadPoolExecutor(20) as executor:
             more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
             done[pkgname] = executor.submit(package_handler, pkg)
         todo = more
+
+    del repo
 
     for future in concurrent.futures.as_completed(done.values()):
         result = future.result()
