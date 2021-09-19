@@ -44,7 +44,7 @@ class ProblematicImportSearcher(object):
             localfile = os.path.join(self.local_mirror, 'mingw', pkg.db.name, pkg.filename)
             return open(localfile, "rb")
         else:
-            return urlopen("https://mirror.msys2.org/mingw/{}/{}".format(pkg.db.name, pkg.filename))
+            return urlopen("{}/{}".format(pkg.db.url, pkg.filename))
 
     def __call__(self, pkg):
         if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
