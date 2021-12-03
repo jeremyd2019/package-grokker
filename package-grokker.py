@@ -41,7 +41,7 @@ class ProblematicImportSearcher(object):
 
     def _open_package(self, pkg):
         if self.local_mirror:
-            localfile = os.path.join(self.local_mirror, 'mingw', pkg.db.name, pkg.filename)
+            localfile = os.path.join(self.local_mirror, pkg.filename)
             return open(localfile, "rb")
         else:
             return urlopen("{}/{}".format(pkg.db.url, pkg.filename))
@@ -82,10 +82,19 @@ parser.add_argument('symbol', nargs='*', help='problematic symbol(s)')
 
 options = parser.parse_args()
 
-package_handler = ProblematicImportSearcher(options.dll, options.symbol, options.local_mirror)
+local_mirror = None
+if options.local_mirror:
+    if options.repo == 'msys':
+        local_mirror = os.path.join(options.local_mirror, options.repo, 'x86_64')
+    else:
+        local_mirror = os.path.join(options.local_mirror, 'mingw', options.repo)
+
+package_handler = ProblematicImportSearcher(options.dll, options.symbol, local_mirror)
 
 if options.local_mirror:
-    repo = pacdb.Database(options.repo, filename=os.path.join(options.local_mirror, 'mingw', options.repo, '{}.files'.format(options.repo)))
+    repo = pacdb.Database(options.repo, filename=os.path.join(local_mirror, '{}.files'.format(options.repo)))
+elif options.repo == 'msys':
+    repo = pacdb.msys_db_by_arch('x86_64', 'files')
 else:
     repo = pacdb.mingw_db_by_name(options.repo, 'files')
 
