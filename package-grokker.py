@@ -86,6 +86,8 @@ package_handler = ProblematicImportSearcher(options.dll, options.symbol, options
 
 if options.local_mirror:
     repo = pacdb.Database(options.repo, filename=os.path.join(options.local_mirror, 'mingw', options.repo, '{}.files'.format(options.repo)))
+elif options.repo == 'msys':
+    repo = pacdb.msys_db_by_arch('x86_64', 'files')
 else:
     repo = pacdb.mingw_db_by_name(options.repo, 'files')
 
