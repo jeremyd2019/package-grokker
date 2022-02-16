@@ -33,10 +33,9 @@ def open_zstd_supporting_tar(name, fileobj):
 
 
 class ProblematicImportSearcher(object):
-    def __init__(self, problem_dlls, problem_symbols, local_mirror=None):
+    def __init__(self, problem_dll_symbols, local_mirror=None):
         super(ProblematicImportSearcher, self).__init__()
-        self.problem_dlls = set(dll.encode('ascii').lower() for dll in problem_dlls)
-        self.problem_symbols = set(sym.encode('ascii') for sym in problem_symbols)
+        self.problem_dlls = {dll.encode('ascii').lower(): set(sym.encode('ascii') for sym in symbols) for dll, symbols in problem_dll_symbols.items()}
         self.local_mirror = local_mirror
 
     def _open_package(self, pkg):
@@ -62,11 +61,12 @@ class ProblematicImportSearcher(object):
                             pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
                         ])
                         for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            if entry.dll.lower() in self.problem_dlls:
-                                if not self.problem_symbols:
+                            problem_symbols = self.problem_dlls.get(entry.dll.lower(), None)
+                            if problem_symbols is not None:
+                                if not problem_symbols:
                                     return pkg
                                 for imp in entry.imports:
-                                    if imp.name in self.problem_symbols:
+                                    if imp.name in problem_symbols:
                                         return pkg
                 except pefile.PEFormatError:
                     continue
@@ -89,14 +89,15 @@ if options.local_mirror:
     else:
         local_mirror = os.path.join(options.local_mirror, 'mingw', options.repo)
 
-package_handler = ProblematicImportSearcher(options.dll, options.symbol, local_mirror)
-
 if options.local_mirror:
     repo = pacdb.Database(options.repo, filename=os.path.join(local_mirror, '{}.files'.format(options.repo)))
 elif options.repo == 'msys':
     repo = pacdb.msys_db_by_arch('x86_64', 'files')
 else:
     repo = pacdb.mingw_db_by_name(options.repo, 'files')
+
+# TODO: revamp args to allow specifying per-dll symbol list
+package_handler = ProblematicImportSearcher({dll: options.symbol for dll in options.dll}, local_mirror)
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
