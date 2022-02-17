@@ -1,0 +1,37 @@
+name: Package update check
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'pacman repo name to search'
+        required: true
+        default: 'mingw64'
+      package:
+        description: 'package from which to find dependents'
+        required: true
+      old_url:
+        description: 'url to old package version'
+        required: true
+      new_url:
+        description: 'url to new package version'
+        required: true
+
+jobs:
+  checker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install stuff
+        run: |
+          python -m venv --system-site-packages pefile
+          . pefile/bin/activate
+          pip install pefile zstandard
+          deactivate
+      - name: Grok packages
+        run: |
+          . pefile/bin/activate
+          python -u package-update-check.py -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' '${{ github.event.inputs.old_url }}' '${{ github.event.inputs.new_url }}'
