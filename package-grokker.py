@@ -35,7 +35,7 @@ def open_zstd_supporting_tar(name, fileobj):
 class ProblematicImportSearcher(object):
     def __init__(self, problem_dll_symbols, local_mirror=None):
         super(ProblematicImportSearcher, self).__init__()
-        self.problem_dlls = {dll.encode('ascii').lower(): set(sym.encode('ascii') for sym in symbols) for dll, symbols in problem_dll_symbols.items()}
+        self.problem_dlls = problem_dll_symbols
         self.local_mirror = local_mirror
 
     def _open_package(self, pkg):
@@ -97,7 +97,8 @@ else:
     repo = pacdb.mingw_db_by_name(options.repo, 'files')
 
 # TODO: revamp args to allow specifying per-dll symbol list
-package_handler = ProblematicImportSearcher({dll: options.symbol for dll in options.dll}, local_mirror)
+bytes_symbols = set(sym.encode('ascii') for sym in options.symbol)
+package_handler = ProblematicImportSearcher({dll.encode('ascii').lower(): bytes_symbols for dll in options.dll}, local_mirror)
 
 with concurrent.futures.ThreadPoolExecutor(20) as executor:
 
