@@ -46,7 +46,7 @@ for (i, url) in zip(itertools.count(), options.url):
         if local_mirror:
             options.url[i] = Path(os.path.join(local_mirror, pkg.filename)).as_uri()
         else:
-            options.url[i] = "{}/{}".format(pkg.db.url, pkg.filename))
+            options.url[i] = "{}/{}".format(pkg.db.url, pkg.filename)
 
 problem_dll_symbols = grokkermod.diff_package_exports(*options.url)
 with gha_group('Removed DLLs/Symbols'):
