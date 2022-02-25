@@ -1,4 +1,4 @@
-name: Package update check
+name: PR update check
 
 on:
   workflow_dispatch:
