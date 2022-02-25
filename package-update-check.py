@@ -2,6 +2,7 @@ import argparse
 import itertools
 import os
 import pprint
+import sys
 
 from contextlib import contextmanager
 from pacdb import pacdb
@@ -43,6 +44,10 @@ else:
 for (i, url) in zip(itertools.count(), options.url):
     if url == '@PKG@':
         pkg = repo.get_pkg(options.package)
+        if pkg is None:
+            print("WARNING: package does not exist in sync db: {}, skipping".format(options.pkg), file=sys.stderr)
+            exit(0)
+
         if local_mirror:
             options.url[i] = Path(os.path.join(local_mirror, pkg.filename)).as_uri()
         else:
