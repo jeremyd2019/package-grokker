@@ -45,7 +45,7 @@ for (i, url) in zip(itertools.count(), options.url):
     if url == '@PKG@':
         pkg = repo.get_pkg(options.package)
         if pkg is None:
-            print("WARNING: package does not exist in sync db: {}, skipping".format(options.pkg), file=sys.stderr)
+            print("WARNING: package does not exist in sync db: {}, skipping".format(options.package), file=sys.stderr)
             exit(0)
 
         if local_mirror:
