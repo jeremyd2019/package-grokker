@@ -1,9 +1,11 @@
 import argparse
+import itertools
 import os
 import pprint
 
 from contextlib import contextmanager
 from pacdb import pacdb
+from pathlib import Path
 import grokkermod
 
 @contextmanager
@@ -37,6 +39,14 @@ elif options.repo == 'msys':
     repo = pacdb.msys_db_by_arch('x86_64', 'files')
 else:
     repo = pacdb.mingw_db_by_name(options.repo, 'files')
+
+for (i, url) in zip(itertools.count(), options.url):
+    if url == '@PKG@':
+        pkg = repo.get_pkg(options.package)
+        if local_mirror:
+            options.url[i] = Path(os.path.join(local_mirror, pkg.filename)).as_uri()
+        else:
+            options.url[i] = "{}/{}".format(pkg.db.url, pkg.filename))
 
 problem_dll_symbols = grokkermod.diff_package_exports(*options.url)
 with gha_group('Removed DLLs/Symbols'):

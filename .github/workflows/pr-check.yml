@@ -1,0 +1,48 @@
+name: Package update check
+
+on:
+  workflow_dispatch:
+    inputs:
+      msystem:
+        description: 'MSYSTEM'
+        required: true
+        default: 'MINGW64'
+      pr:
+        description: 'PR number'
+        required: true
+
+jobs:
+  checker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repo: msys2/MINGW-packages
+          workflow: main.yml
+          workflow_conclusion: success
+          pr: ${{ github.event.inputs.pr }}
+          name: ${{ github.event.inputs.msystem }}-packages
+          path: artifacts
+
+      - name: Install stuff
+        run: |
+          python -m venv --system-site-packages pefile
+          . pefile/bin/activate
+          pip install pefile zstandard
+          deactivate
+      - name: Grok packages
+        run: |
+          . pefile/bin/activate
+          repo='${{ github.event.inputs.msystem }}'
+          repo="${repo,,}"
+
+          for pkg in artifacts/*.pkg.tar.*; do
+            pkgname=$(basename "$pkg" | rev | cut -d- -f4- | rev)
+            python -u package-update-check.py -e "${repo}" -p "${pkgname}" @PKG@ "file://$(pwd)/${pkg}"
+          done
