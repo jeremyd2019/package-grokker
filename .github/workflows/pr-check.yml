@@ -25,9 +25,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repo: msys2/MINGW-packages
           workflow: main.yml
+          workflow_conclusion: ''
           pr: ${{ github.event.inputs.pr }}
           name: ${{ github.event.inputs.msystem }}-packages
           path: artifacts
+          search_artifacts: true
 
       - name: Install stuff
         run: |
