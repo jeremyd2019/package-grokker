@@ -31,13 +31,13 @@ jobs:
 
       - name: Install stuff
         run: |
-          python -m venv --system-site-packages pefile
-          . pefile/bin/activate
-          pip install pefile zstandard
+          python -m venv --system-site-packages venv
+          . venv/bin/activate
+          pip install -r requirements.txt
           deactivate
       - name: Grok packages
         run: |
-          . pefile/bin/activate
+          . venv/bin/activate
           repo='${{ github.event.inputs.msystem }}'
           repo="${repo,,}"
 

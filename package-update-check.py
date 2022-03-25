@@ -5,8 +5,9 @@ import pprint
 import sys
 
 from contextlib import contextmanager
-from pacdb import pacdb
 from pathlib import Path
+
+import pacdb
 import grokkermod
 
 @contextmanager

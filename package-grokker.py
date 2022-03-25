@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from pacdb import pacdb
+import pacdb
 import grokkermod
 
 

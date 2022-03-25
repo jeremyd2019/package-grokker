@@ -8,8 +8,6 @@ import zstandard
 from contextlib import contextmanager, closing
 from urllib.request import urlopen
 
-from pacdb import pacdb
-
 _tls = threading.local()
 
 PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd"))
