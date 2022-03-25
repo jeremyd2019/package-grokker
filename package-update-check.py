@@ -57,7 +57,9 @@ for (i, url) in zip(itertools.count(), options.url):
 problem_dll_symbols = grokkermod.diff_package_exports(*options.url)
 with gha_group('Removed DLLs/Symbols'):
     pprint.pprint(problem_dll_symbols)
-package_handler = grokkermod.ProblematicImportSearcher(problem_dll_symbols, local_mirror)
 
-for pkgbase in grokkermod.grok_dependency_tree(repo, options.package, package_handler):
-    print(pkgbase)
+if problem_dll_symbols:
+    package_handler = grokkermod.ProblematicImportSearcher(problem_dll_symbols, local_mirror)
+
+    for pkgbase in grokkermod.grok_dependency_tree(repo, options.package, package_handler):
+        print(pkgbase)
