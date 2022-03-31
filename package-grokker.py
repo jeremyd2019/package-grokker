@@ -32,5 +32,8 @@ else:
 bytes_symbols = set(sym.encode('ascii') for sym in options.symbol)
 package_handler = grokkermod.ProblematicImportSearcher({dll.encode('ascii').lower(): bytes_symbols for dll in options.dll}, local_mirror)
 
+seen = set()
 for pkgbase in grokkermod.grok_dependency_tree(repo, options.package, package_handler):
-    print(pkgbase)
+    if pkgbase not in seen:
+        print(pkgbase)
+        seen.add(pkgbase)

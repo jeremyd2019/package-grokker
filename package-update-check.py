@@ -63,5 +63,8 @@ if options.verbose:
 if problem_dll_symbols:
     package_handler = grokkermod.ProblematicImportSearcher(problem_dll_symbols, local_mirror)
 
+    seen = set()
     for pkgbase in grokkermod.grok_dependency_tree(repo, options.package, package_handler):
-        print(pkgbase)
+        if pkgbase not in seen:
+            print(pkgbase)
+            seen.add(pkgbase)
