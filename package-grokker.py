@@ -10,6 +10,7 @@ parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
 parser.add_argument('-d', '--dll', required=True, action='append', help='dll(s) from which problematic symbols are imported')
 parser.add_argument('-l', '--local-mirror', help='root directory of local mirror')
+parser.add_argument('-v', '--verbose', action='count', help='output additional information')
 parser.add_argument('symbol', nargs='*', help='problematic symbol(s)')
 
 options = parser.parse_args()

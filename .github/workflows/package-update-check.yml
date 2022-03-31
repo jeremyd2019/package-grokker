@@ -34,4 +34,4 @@ jobs:
       - name: Grok packages
         run: |
           . venv/bin/activate
-          python -u package-update-check.py -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' '${{ github.event.inputs.old_url }}' '${{ github.event.inputs.new_url }}'
+          python -u package-update-check.py -v -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' '${{ github.event.inputs.old_url }}' '${{ github.event.inputs.new_url }}'

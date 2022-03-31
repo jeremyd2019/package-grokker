@@ -25,6 +25,7 @@ parser = argparse.ArgumentParser(description='Search packages for problematic im
 parser.add_argument('-e', '--repo', default='mingw64', help='pacman repo name to search')
 parser.add_argument('-p', '--package', required=True, help='package from which to find dependents')
 parser.add_argument('-l', '--local-mirror', help='root directory of local mirror')
+parser.add_argument('-v', '--verbose', action='count', help='output additional information')
 parser.add_argument('url', nargs=2, help='url to old and new packages')
 
 options = parser.parse_args()
@@ -55,8 +56,9 @@ for (i, url) in zip(itertools.count(), options.url):
             options.url[i] = "{}/{}".format(pkg.db.url, pkg.filename)
 
 problem_dll_symbols = grokkermod.diff_package_exports(*options.url)
-with gha_group('Removed DLLs/Symbols'):
-    pprint.pprint(problem_dll_symbols)
+if options.verbose:
+    with gha_group('Removed DLLs/Symbols'):
+        pprint.pprint(problem_dll_symbols)
 
 if problem_dll_symbols:
     package_handler = grokkermod.ProblematicImportSearcher(problem_dll_symbols, local_mirror)

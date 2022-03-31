@@ -45,5 +45,5 @@ jobs:
 
           for pkg in artifacts/*.pkg.tar.*; do
             pkgname=$(basename "$pkg" | rev | cut -d- -f4- | rev)
-            python -u package-update-check.py -e "${repo}" -p "${pkgname}" @PKG@ "file://$(pwd)/${pkg}"
+            python -u package-update-check.py -v -e "${repo}" -p "${pkgname}" @PKG@ "file://$(pwd)/${pkg}"
           done
