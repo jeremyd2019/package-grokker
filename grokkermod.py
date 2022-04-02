@@ -72,25 +72,32 @@ class ProblematicImportSearcher(object):
 
 def grok_dependency_tree(repo, package, package_handler):
     with concurrent.futures.ThreadPoolExecutor(20) as executor:
+        makedepend={}
         done={}
         todo=[package]
 
         # Check packages that immediately makedepend on the given package
         # https://github.com/jeremyd2019/package-grokker/issues/6
         for pkgname in repo.get_pkg(package).compute_rdepends('makedepends'):
-            done[pkgname] = executor.submit(package_handler, repo.get_pkg(pkgname))
+            makedepend[pkgname] = executor.submit(package_handler, repo.get_pkg(pkgname))
 
         while todo:
             more=[]
             for pkgname in todo:
                 pkg = repo.get_pkg(pkgname)
                 more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
-                done[pkgname] = executor.submit(package_handler, pkg)
+                if pkgname in makedepend:
+                    done[pkgname] = makedepend[pkgname]
+                    del makedepend[pkgname]
+                else:
+                    done[pkgname] = executor.submit(package_handler, pkg)
             todo = more
 
         del repo
 
-        for future in concurrent.futures.as_completed(done.values()):
+        futures = set(done.values())
+        futures.update(makedepend.values())
+        for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result is not None:
                 yield result.base
