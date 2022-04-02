@@ -74,12 +74,16 @@ def grok_dependency_tree(repo, package, package_handler):
     with concurrent.futures.ThreadPoolExecutor(20) as executor:
         makedepend={}
         done={}
-        todo=[package]
+        if isinstance(package, str):
+            todo=[package]
+        else:
+            todo=package
 
         # Check packages that immediately makedepend on the given package
         # https://github.com/jeremyd2019/package-grokker/issues/6
-        for pkgname in repo.get_pkg(package).compute_rdepends('makedepends'):
-            makedepend[pkgname] = executor.submit(package_handler, repo.get_pkg(pkgname))
+        for pkgname in todo:
+            for rdep in repo.get_pkg(pkgname).compute_rdepends('makedepends'):
+                makedepend[rdep] = executor.submit(package_handler, repo.get_pkg(rdep))
 
         while todo:
             more=[]
