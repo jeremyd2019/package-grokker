@@ -78,21 +78,22 @@ def grok_dependency_tree(repo, package, package_handler):
         makedepend={}
         done={}
         if isinstance(package, str):
-            todo=[package]
+            todo=set((package,))
         else:
-            todo=package
+            todo=set(package)
 
         # Check packages that immediately makedepend on the given package
         # https://github.com/jeremyd2019/package-grokker/issues/6
         for pkgname in todo:
             for rdep in repo.get_pkg(pkgname).compute_rdepends('makedepends'):
-                makedepend[rdep] = executor.submit(package_handler, repo.get_pkg(rdep))
+                if rdep not in makedepend:
+                    makedepend[rdep] = executor.submit(package_handler, repo.get_pkg(rdep))
 
         while todo:
-            more=[]
+            more=set()
             for pkgname in todo:
                 pkg = repo.get_pkg(pkgname)
-                more.extend(rdep for rdep in pkg.compute_requiredby() if rdep not in done)
+                more.update(rdep for rdep in pkg.compute_requiredby() if rdep not in done and rdep not in todo)
                 if pkgname in makedepend:
                     done[pkgname] = makedepend[pkgname]
                     del makedepend[pkgname]
