@@ -1,0 +1,58 @@
+name: Grok artifacts
+
+on:
+  workflow_call:
+    inputs:
+      msystem:
+        description: 'Sync database to search for reverse dependencies'
+        required: false
+        default: 'MINGW64'
+        type: string
+      continue-on-artifact-error:
+        description: 'Don''t fail job if download-artifact fails'
+        required: false
+        default: false
+        type: boolean
+      workflow-repository:
+        description: 'Repository of the workflow you''re calling'
+        required: false
+        default: 'jeremyd2019/package-grokker'
+        type: string
+      workflow-ref:
+        description: 'Ref of repository of the workflow you''re calling'
+        required: false
+        type: string
+
+jobs:
+  package-grokker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.workflow-repository }}
+          ref: ${{ inputs.workflow-ref }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        id: artifacts
+        continue-on-error: ${{ inputs.continue-on-artifact-error }}
+        with:
+          name: ${{ inputs.msystem }}-packages
+          path: artifacts
+
+      - name: Install stuff
+        if: steps.artifacts.outcome == 'success'
+        run: |
+          python -m venv --system-site-packages venv
+          . venv/bin/activate
+          pip install -r requirements.txt
+          deactivate
+
+      - name: Grok packages
+        if: steps.artifacts.outcome == 'success'
+        run: |
+          . venv/bin/activate
+          repo='${{ inputs.msystem }}'
+          repo="${repo,,}"
+          python -u package-update-check.py -v -e "${repo}" artifact_dir ./artifacts
