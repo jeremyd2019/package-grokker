@@ -18,7 +18,7 @@ runs:
       echo "::group::Install stuff"
       python -m venv --system-site-packages grokker_venv
       . grokker_venv/bin/activate
-      pip install -r requirements.txt
+      pip install -r '${{ github.action_path }}/../requirements.txt'
       deactivate
       echo "::endgroup::"
   - name: Grok packages
