@@ -33,10 +33,14 @@ jobs:
           repository: ${{ inputs.workflow-repository }}
           ref: ${{ inputs.workflow-ref }}
 
+      - id: workaround
+        run: |
+          echo '::set-output name=continue-on-artifact-error::${{ inputs.continue-on-artifact-error }}'
+
       - name: Download artifacts
         uses: actions/download-artifact@v3
         id: artifacts
-        continue-on-error: ${{ inputs.continue-on-artifact-error }}
+        continue-on-error: ${{ steps.workaround.outputs.continue-on-artifact-error == 'true' }}
         with:
           name: ${{ inputs.msystem }}-packages
           path: artifacts
