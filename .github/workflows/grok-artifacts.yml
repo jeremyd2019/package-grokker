@@ -45,18 +45,9 @@ jobs:
           name: ${{ inputs.msystem }}-packages
           path: artifacts
 
-      - name: Install stuff
-        if: steps.artifacts.outcome == 'success'
-        run: |
-          python -m venv --system-site-packages venv
-          . venv/bin/activate
-          pip install -r requirements.txt
-          deactivate
-
       - name: Grok packages
+        uses: ./grok-artifacts
         if: steps.artifacts.outcome == 'success'
-        run: |
-          . venv/bin/activate
-          repo='${{ inputs.msystem }}'
-          repo="${repo,,}"
-          python -u package-update-check.py -v -e "${repo}" artifact_dir ./artifacts
+        with:
+          repo: ${{ inputs.msystem }}
+          path: artifacts

@@ -39,15 +39,8 @@ jobs:
           path: artifacts
           search_artifacts: true
 
-      - name: Install stuff
-        run: |
-          python -m venv --system-site-packages venv
-          . venv/bin/activate
-          pip install -r requirements.txt
-          deactivate
       - name: Grok packages
-        run: |
-          . venv/bin/activate
-          repo='${{ github.event.inputs.msystem }}'
-          repo="${repo,,}"
-          python -u package-update-check.py -v -e "${repo}" artifact_dir ./artifacts
+        uses: ./grok-artifacts
+        with:
+          repo: ${{ github.event.inputs.msystem }}
+          path: artifacts

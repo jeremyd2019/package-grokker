@@ -1,0 +1,27 @@
+name: 'Grok artifacts'
+description: 'Grok MINGW CI artifacts for removed DLLs or symbols required by reverse dependencies'
+inputs:
+  repo:
+    description: 'sync database to search for reverse dependencies'
+    required: false
+    default: 'mingw64'
+  path:
+    description: 'Directory containing updated packages to grok'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+
+  - name: Install stuff
+    shell: bash
+    run: |
+      python -m venv --system-site-packages grokker_venv
+      . grokker_venv/bin/activate
+      pip install -r requirements.txt
+      deactivate
+  - name: Grok packages
+    shell: bash
+    run: |
+      . grokker_venv/bin/activate
+      repo='${{ inputs.repo }}'
+      python -u '${{ github.action_path }}/../package-update-check.py' -v -e "${repo,,}" artifact_dir '${{ inputs.path }}'
