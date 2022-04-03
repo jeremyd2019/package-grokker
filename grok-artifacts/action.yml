@@ -15,13 +15,17 @@ runs:
   - name: Install stuff
     shell: bash
     run: |
+      echo "::group::Install stuff"
       python -m venv --system-site-packages grokker_venv
       . grokker_venv/bin/activate
       pip install -r requirements.txt
       deactivate
+      echo "::endgroup::"
   - name: Grok packages
     shell: bash
     run: |
+      echo "::group::Grok packages"
       . grokker_venv/bin/activate
       repo='${{ inputs.repo }}'
       python -u '${{ github.action_path }}/../package-update-check.py' -v -e "${repo,,}" artifact_dir '${{ inputs.path }}'
+      echo "::endgroup::"
