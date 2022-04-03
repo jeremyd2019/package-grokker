@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
       - name: Install stuff
@@ -34,4 +34,4 @@ jobs:
       - name: Grok packages
         run: |
           . venv/bin/activate
-          python -u package-update-check.py -v -e '${{ github.event.inputs.repo }}' -p '${{ github.event.inputs.package }}' '${{ github.event.inputs.old_url }}' '${{ github.event.inputs.new_url }}'
+          python -u package-update-check.py -v -e '${{ github.event.inputs.repo }}' compare_urls -p '${{ github.event.inputs.package }}' '${{ github.event.inputs.old_url }}' '${{ github.event.inputs.new_url }}'

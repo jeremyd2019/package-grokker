@@ -30,12 +30,15 @@ def open_zstd_supporting_tar(name, fileobj):
 
 
 class ProblematicImportSearcher(object):
-    def __init__(self, problem_dll_symbols, local_mirror=None):
+    def __init__(self, problem_dll_symbols, local_mirror=None, artifacts=None):
         super(ProblematicImportSearcher, self).__init__()
         self.problem_dlls = problem_dll_symbols
         self.local_mirror = local_mirror
+        self.artifacts = artifacts
 
     def _open_package(self, pkg):
+        if self.artifacts and pkg.name in self.artifacts:
+            return open(self.artifacts[pkg.name], "rb")
         if self.local_mirror:
             localfile = os.path.join(self.local_mirror, pkg.filename)
             return open(localfile, "rb")

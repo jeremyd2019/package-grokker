@@ -7,6 +7,14 @@ on:
         description: 'MSYSTEM'
         required: true
         default: 'MINGW64'
+        type: choice
+        options:
+        - MINGW64
+        - MINGW32
+        - UCRT64
+        - CLANG64
+        - CLANG32
+        - CLANGARM64
       pr:
         description: 'PR number'
         required: true
@@ -16,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
       - name: Download artifacts
@@ -42,8 +50,4 @@ jobs:
           . venv/bin/activate
           repo='${{ github.event.inputs.msystem }}'
           repo="${repo,,}"
-
-          for pkg in artifacts/*.pkg.tar.*; do
-            pkgname=$(basename "$pkg" | rev | cut -d- -f4- | rev)
-            python -u package-update-check.py -v -e "${repo}" -p "${pkgname}" @PKG@ "file://$(pwd)/${pkg}"
-          done
+          python -u package-update-check.py -v -e "${repo}" artifact_dir ./artifacts
