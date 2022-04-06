@@ -18,7 +18,7 @@ def open_zstd_supporting_tar(name, fileobj):
     # HACK: please, Python, support zst with |* in tarfile
     # could probably check for magic, but would have to have a stream wrapper
     # like tarfile already has to "put back" the magic bytes
-    if name.endswith(".zst"):
+    if str(name).endswith(".zst"):
         if not hasattr(_tls, 'zdctx'):
             _tls.zdctx = zstandard.ZstdDecompressor()
         with _tls.zdctx.stream_reader(fileobj, closefd=False) as zstream, \
@@ -50,7 +50,7 @@ class ProblematicImportSearcher(object):
             if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
                 return None
             with self._open_package(pkg) as pkgfile, \
-                 open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
+                 open_zstd_supporting_tar(self.artifacts.get(pkg.name, pkg.filename), pkgfile) as tar:
                 for entry in tar:
                     if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
                         continue
