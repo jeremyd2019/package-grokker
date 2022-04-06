@@ -46,30 +46,34 @@ class ProblematicImportSearcher(object):
             return urlopen("{}/{}".format(pkg.db.url, pkg.filename))
 
     def __call__(self, pkg):
-        if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
-            return None
-        with self._open_package(pkg) as pkgfile, \
-             open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
-            for entry in tar:
-                if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
-                    continue
+        try:
+            if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
+                return None
+            with self._open_package(pkg) as pkgfile, \
+                 open_zstd_supporting_tar(pkg.filename, pkgfile) as tar:
+                for entry in tar:
+                    if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
+                        continue
 
-                try:
-                    with tar.extractfile(entry) as infofile, \
-                         closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
-                        pe.parse_data_directories(directories=[
-                            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
-                        ])
-                        for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            problem_symbols = self.problem_dlls.get(entry.dll.lower(), None)
-                            if problem_symbols is not None:
-                                if not problem_symbols:
-                                    return pkg
-                                for imp in entry.imports:
-                                    if imp.name in problem_symbols:
+                    try:
+                        with tar.extractfile(entry) as infofile, \
+                             closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
+                            pe.parse_data_directories(directories=[
+                                pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
+                            ])
+                            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                                problem_symbols = self.problem_dlls.get(entry.dll.lower(), None)
+                                if problem_symbols is not None:
+                                    if not problem_symbols:
                                         return pkg
-                except pefile.PEFormatError:
-                    continue
+                                    for imp in entry.imports:
+                                        if imp.name in problem_symbols:
+                                            return pkg
+                    except pefile.PEFormatError:
+                        continue
+        except Exception:
+            raise RuntimeError(f"Failed to grok package {pkg!s}")
+
         return None
 
 
@@ -111,27 +115,30 @@ def grok_dependency_tree(repo, package, package_handler):
                 yield result.base
 
 def exports_for_package(name, fileobj):
-    package_exports = {}
-    with open_zstd_supporting_tar(name, fileobj) as tar:
-        for entry in tar:
-            if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
-                continue
+    try:
+        package_exports = {}
+        with open_zstd_supporting_tar(name, fileobj) as tar:
+            for entry in tar:
+                if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
+                    continue
 
-            try:
-                with tar.extractfile(entry) as infofile, \
-                     closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
-                    pe.parse_data_directories(directories=[
-                        pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']
-                    ])
+                try:
+                    with tar.extractfile(entry) as infofile, \
+                         closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
+                        pe.parse_data_directories(directories=[
+                            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']
+                        ])
 
-                    # assume we don't need to worry about ordinal-only exports
-                    if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
-                        package_exports[entry.name] = set(exp.name for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols)
-                    else:
-                        package_exports[entry.name] = set()
-            except pefile.PEFormatError:
-                continue
-    return package_exports
+                        # assume we don't need to worry about ordinal-only exports
+                        if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+                            package_exports[entry.name] = set(exp.name for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols)
+                        else:
+                            package_exports[entry.name] = set()
+                except pefile.PEFormatError:
+                    continue
+        return package_exports
+    except Exception:
+        raise RuntimeError(f"Failed to get DLL exports from package {name!s}")
 
 def diff_package_exports(url1, url2):
     with urlopen(url1) as fileobj:
