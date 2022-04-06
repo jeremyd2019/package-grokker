@@ -49,8 +49,9 @@ class ProblematicImportSearcher(object):
         try:
             if not any(os.path.splitext(f)[-1] in PE_FILE_EXTENSIONS for f in pkg.files):
                 return None
+            filename = self.artifacts.get(pkg.name, pkg.filename) if self.artifacts else pkg.filename
             with self._open_package(pkg) as pkgfile, \
-                 open_zstd_supporting_tar(self.artifacts.get(pkg.name, pkg.filename), pkgfile) as tar:
+                 open_zstd_supporting_tar(filename, pkgfile) as tar:
                 for entry in tar:
                     if not entry.isreg() or os.path.splitext(entry.name)[-1] not in PE_FILE_EXTENSIONS:
                         continue
