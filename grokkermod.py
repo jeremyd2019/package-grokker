@@ -73,7 +73,7 @@ class ProblematicImportSearcher(object):
                     except pefile.PEFormatError:
                         continue
         except Exception:
-            raise RuntimeError(f"Failed to grok package {pkg!s}")
+            raise RuntimeError(f"Failed to grok package {pkg.name}")
 
         return None
 
