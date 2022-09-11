@@ -10,7 +10,7 @@ from urllib.request import urlopen
 
 _tls = threading.local()
 
-PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd"))
+PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd", ".so"))
 
 
 @contextmanager
