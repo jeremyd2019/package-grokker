@@ -9,6 +9,7 @@ on:
         default: 'MINGW64'
         type: choice
         options:
+        - MSYS
         - MINGW64
         - MINGW32
         - UCRT64
@@ -31,11 +32,11 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repo: msys2/MINGW-packages
+          repo: msys2/${{ github.event.inputs.msystem == 'MSYS' && 'MSYS2-packages' || 'MINGW-packages' }}
           workflow: main.yml
           workflow_conclusion: ''
           pr: ${{ github.event.inputs.pr }}
-          name: ${{ github.event.inputs.msystem }}-packages
+          name: ${{ github.event.inputs.msystem == 'MSYS' && 'msys2' || github.event.inputs.msystem }}-packages
           path: artifacts
           search_artifacts: true
 
