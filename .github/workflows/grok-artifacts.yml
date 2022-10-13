@@ -35,7 +35,7 @@ jobs:
 
       - id: workaround
         run: |
-          echo '::set-output name=continue-on-artifact-error::${{ inputs.continue-on-artifact-error }}'
+          echo 'continue-on-artifact-error=${{ inputs.continue-on-artifact-error }}' >> $GITHUB_OUTPUT
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
