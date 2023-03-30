@@ -59,7 +59,7 @@ class ProblematicImportSearcher(object):
 
                     try:
                         with tar.extractfile(entry) as infofile, \
-                             closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
+                             closing(pefile.PE(data=infofile.read(), fast_load=True, max_symbol_exports=0x10000)) as pe:
                             pe.parse_data_directories(directories=[
                                 pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
                             ])
@@ -131,7 +131,7 @@ def exports_for_package(name, fileobj):
 
                 try:
                     with tar.extractfile(entry) as infofile, \
-                         closing(pefile.PE(data=infofile.read(), fast_load=True)) as pe:
+                         closing(pefile.PE(data=infofile.read(), fast_load=True, max_symbol_exports=0x10000)) as pe:
                         pe.parse_data_directories(directories=[
                             pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']
                         ])
