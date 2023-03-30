@@ -63,6 +63,11 @@ class ProblematicImportSearcher(object):
                             pe.parse_data_directories(directories=[
                                 pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
                             ])
+
+                            if len(pe.get_warnings()) > 0:
+                                print(f"Warnings for {entry.name}:")
+                                pe.show_warnings()
+
                             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                                 problem_symbols = self.problem_dlls.get(entry.dll.lower(), None)
                                 if problem_symbols is not None:
