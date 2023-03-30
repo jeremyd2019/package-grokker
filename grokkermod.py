@@ -131,6 +131,10 @@ def exports_for_package(name, fileobj):
                             pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']
                         ])
 
+                        if len(pe.get_warnings()) > 0:
+                            print(f"Warnings for {entry.name}:")
+                            pe.show_warnings()
+
                         # assume we don't need to worry about ordinal-only exports
                         if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
                             package_exports[entry.name] = set(exp.name for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols)
