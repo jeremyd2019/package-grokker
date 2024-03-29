@@ -30,6 +30,19 @@ def open_zstd_supporting_tar(name, fileobj):
             yield tar
 
 
+@contextmanager
+def pefile_set_max_import_symbols(max_symbols: int):
+    # Since pefile uses global state for this, and we don't want to mess with it
+    # for the rest of the program, we'll use a context manager to temporarily
+    # bump the value.
+    old = pefile.MAX_IMPORT_SYMBOLS
+    pefile.MAX_IMPORT_SYMBOLS = max_symbols
+    try:
+        yield
+    finally:
+        pefile.MAX_IMPORT_SYMBOLS = old
+
+
 class ProblematicImportSearcher(object):
     def __init__(self, problem_dll_symbols, local_mirror=None, artifacts=None):
         super(ProblematicImportSearcher, self).__init__()
@@ -60,9 +73,11 @@ class ProblematicImportSearcher(object):
                     try:
                         with tar.extractfile(entry) as infofile, \
                              closing(pefile.PE(data=infofile.read(), fast_load=True, max_symbol_exports=0x10000)) as pe:
-                            pe.parse_data_directories(directories=[
-                                pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
-                            ])
+
+                            with pefile_set_max_import_symbols(0x10000):
+                                pe.parse_data_directories(directories=[
+                                    pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']
+                                ])
 
                             if len(pe.get_warnings()) > 0:
                                 print(f"Warnings for {entry.name}:")
