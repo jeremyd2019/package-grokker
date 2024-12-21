@@ -23,9 +23,11 @@ runs:
       echo "::endgroup::"
   - name: Grok packages
     shell: bash
+    env:
+      repo: ${{ inputs.repo }}
+      packagepath: ${{ inputs.path }}
     run: |
       echo "::group::Grok packages"
       . grokker_venv/bin/activate
-      repo='${{ inputs.repo }}'
-      python -u '${{ github.action_path }}/../package-update-check.py' -v -e "${repo,,}" artifact_dir '${{ inputs.path }}'
+      python -u '${{ github.action_path }}/../package-update-check.py' -v -e "${repo,,}" artifact_dir "${packagepath}"
       echo "::endgroup::"
