@@ -29,7 +29,7 @@ jobs:
         with:
           submodules: true
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v8
+        uses: dawidd6/action-download-artifact@v9
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repo: msys2/${{ github.event.inputs.msystem == 'MSYS' && 'MSYS2-packages' || 'MINGW-packages' }}
