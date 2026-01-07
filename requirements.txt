@@ -1,3 +1,4 @@
 pefile
 zstandard
 pacdb
+requests

@@ -4,14 +4,20 @@ import pefile
 import tarfile
 import threading
 import zstandard
+import requests
 
 from contextlib import contextmanager, closing
-from urllib.request import urlopen
 
 _tls = threading.local()
 
 # python uses .pyd for extensions, ruby uses .so, and octave uses .oct
 PE_FILE_EXTENSIONS = frozenset((".dll", ".exe", ".pyd", ".so", ".oct"))
+
+
+def urlopen(url):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    return response.raw
 
 
 @contextmanager
